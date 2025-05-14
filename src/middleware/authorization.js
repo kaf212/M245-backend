@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 // Validate token (signature + expiration)
 const validateToken = (req, res, next) => {
     const authHeader = req.header('Authorization');
+    console.log(authHeader)
     const token = authHeader?.split(' ')[1]; // Expect Bearer token
 
     if (!token) return res.status(401).json({ error: 'Missing token' });
@@ -29,6 +30,7 @@ const authorizeStandard = (req, res, next) => {
 const authorizeAdmin = (req, res, next) => {
     validateToken(req, res, () => {
         const { role } = req.user;
+        console.log(req.user)
         if (role === 'admin') return next();
         return res.status(403).json({ error: 'Admins only' });
     });

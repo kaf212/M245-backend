@@ -3,39 +3,64 @@ const router = express.Router();
 const User = require('../models/User');
 
 // Get all users
-router.get('/', async (req, res) => {
+router.get('/', authorizeAdmin, async (req, res) => {
     const users = await User.find();
     res.json(users);
 });
 
 // Get single user
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authorizeAdmin, async (req, res) => {
     const user = await User.findById(req.params.userId);
     res.json(user);
 });
 
 // Register new user
 router.post('/register', async (req, res) => {
-    const newUser = new User(req.body);
-    const saved = await newUser.save();
-    res.status(201).json(saved);
+    try {
+        const { password, ...rest } = req.body;
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+            ...rest,
+            password: hashedPassword
+        });
+
+        const saved = await newUser.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // Login (mock - replace with real auth)
 router.post('/login', async (req, res) => {
-    const user = await User.findOne({ email: req.body.email });
-    if (!user || user.password !== req.body.password) return res.status(401).json({ error: 'Invalid credentials' });
-    res.json(user);
+    const { email, password } = req.body;
+    console.log(email, password)
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const userRole = (user.isAdmin) ? "admin" : "standard"
+
+    const token = jwt.sign(
+        { id: user._id, email: user.email, role: userRole },
+        process.env.SECRET_KEY,
+        { expiresIn: '1h' }
+    );
+
+    res.json({ token });
 });
 
 // Update user
-router.put('/:userId', async (req, res) => {
+router.put('/:userId', authorizeStandard, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
     res.json(user);
 });
 
 // Delete user
-router.delete('/:userId', async (req, res) => {
+router.delete('/:userId', authorizeAdmin, async (req, res) => {
     await User.findByIdAndDelete(req.params.userId);
     res.sendStatus(204);
 });
@@ -69,33 +94,48 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 
+// Configure multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'images/'); // make sure this directory exists
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage });
+
 // Get all products
-router.get('/', async (req, res) => {
+router.get('/', authorizeStandard, async (req, res) => {
     const products = await Product.find();
     res.json(products);
 });
 
 // Get single product
-router.get('/:productId', async (req, res) => {
+router.get('/:productId', authorizeStandard, async (req, res) => {
     const product = await Product.findById(req.params.productId);
     res.json(product);
 });
 
-// Create product
-router.post('/', async (req, res) => {
-    const newProduct = new Product(req.body);
+// Create product with image upload
+router.post('/', authorizeAdmin, upload.array('images'), async (req, res) => {
+    const imagePaths = req.files.map(file => file.path);
+    const newProduct = new Product({
+        ...req.body,
+        images: imagePaths
+    });
     const saved = await newProduct.save();
     res.status(201).json(saved);
 });
 
 // Update product
-router.put('/:productId', async (req, res) => {
+router.put('/:productId', authorizeAdmin, async (req, res) => {
     const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { new: true });
     res.json(product);
 });
 
 // Delete product
-router.delete('/:productId', async (req, res) => {
+router.delete('/:productId', authorizeAdmin, async (req, res) => {
     await Product.findByIdAndDelete(req.params.productId);
     res.sendStatus(204);
 });
@@ -138,7 +178,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 
 // Get all orders (admin)
-router.get('/', async (req, res) => {
+router.get('/', authorizeStandard, async (req, res) => {
     const orders = await Order.find().populate('customerId items.productId');
     res.json(orders);
 });
@@ -150,26 +190,26 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Get single order
-router.get('/:orderId', async (req, res) => {
+router.get('/:orderId', authorizeStandard, async (req, res) => {
     const order = await Order.findById(req.params.orderId).populate('items.productId');
     res.json(order);
 });
 
 // Create order
-router.post('/', async (req, res) => {
+router.post('/', authorizeStandard, async (req, res) => {
     const newOrder = new Order(req.body);
     const saved = await newOrder.save();
     res.status(201).json(saved);
 });
 
 // Update order status
-router.put('/:orderId/status', async (req, res) => {
+router.put('/:orderId/status', authorizeStandard, async (req, res) => {
     const order = await Order.findByIdAndUpdate(req.params.orderId, { status: req.body.status }, { new: true });
     res.json(order);
 });
 
 // Delete order
-router.delete('/:orderId', async (req, res) => {
+router.delete('/:orderId', authorizeStandard, async (req, res) => {
     await Order.findByIdAndDelete(req.params.orderId);
     res.sendStatus(204);
 });

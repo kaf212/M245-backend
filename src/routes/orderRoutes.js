@@ -23,9 +23,14 @@ router.get('/:orderId', authorizeStandard, async (req, res) => {
 
 // Create order
 router.post('/', authorizeStandard, async (req, res) => {
-    const newOrder = new Order(req.body);
-    const saved = await newOrder.save();
-    res.status(201).json(saved);
+    try {
+        const newOrder = new Order(req.body);
+        const saved = await newOrder.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({message: err})
+    }
 });
 
 // Update order status
