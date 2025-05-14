@@ -45,7 +45,7 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const userRole = (User.isAdmin) ? "admin" : "standard"
+    const userRole = (user.isAdmin) ? "admin" : "standard"
 
     const token = jwt.sign(
         { id: user._id, email: user.email, role: userRole },
