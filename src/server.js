@@ -14,6 +14,9 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
+app.use('/images', express.static('images'));
+
+
 (async () => {
     const db = await connectDB();
 
