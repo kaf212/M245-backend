@@ -5,6 +5,26 @@ const User = require('../models/User');  // Assuming you have a User model
 
 let adminToken, userToken, adminId, userId;
 
+afterAll(async () => {
+    try {
+        await mongoose.connect('mongodb://localhost:27017/m245', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+
+        const User = mongoose.model('User');
+
+        await User.deleteMany({
+            email: { $in: ['user@example.com', 'admin@example.com'] }
+        });
+
+        await mongoose.disconnect();
+        console.log('Test users deleted.');
+    } catch (err) {
+        console.error('Failed to clean up test users:', err);
+    }
+});
+
 describe('Authentication', () => {
     test('Register Standard User', async () => {
         const res = await axios.post(`${API_BASE}/users/register`, {

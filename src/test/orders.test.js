@@ -1,5 +1,7 @@
 const { createAxiosInstance } = require('./utils');
 const axios = require("axios");
+const mongoose = require("mongoose");
+const User = require("../models/User")
 
 let standardToken, adminToken;
 let userAxios, adminAxios;
@@ -13,7 +15,7 @@ beforeAll(async () => {
             email: 'standard@test.com',
             username: 'standardUser',
             password: 'password123',
-            role: 'standard',
+            isAdmin: 'false',
         });
 
         console.log(userRes.data._id)
@@ -37,7 +39,7 @@ beforeAll(async () => {
             email: 'admin@test.com',
             username: 'adminUser',
             password: 'password123',
-            role: 'admin',
+            isAdmin: 'true',
         });
 
         const loginAdmin = await axios.post('http://localhost:5000/api/users/login', {
@@ -54,8 +56,23 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await userAxios.delete('/users/me');
-    await adminAxios.delete('/users/me');
+    try {
+        await mongoose.connect('mongodb://localhost:27017/m245', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+
+        const User = mongoose.model('User');
+
+        await User.deleteMany({
+            email: { $in: ['standard@test.com', 'admin@test.com'] }
+        });
+
+        await mongoose.disconnect();
+        console.log('Test users deleted.');
+    } catch (err) {
+        console.error('Failed to clean up test users:', err);
+    }
 });
 
 

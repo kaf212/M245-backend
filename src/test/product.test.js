@@ -3,6 +3,8 @@ const FormData = require('form-data');
 const path = require('path');
 const { createAxiosInstance } = require('./utils');
 const axios = require("axios");
+const mongoose = require("mongoose");
+const User = require("../models/User")
 
 let productId;
 let standardToken, adminToken;
@@ -58,8 +60,23 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await userAxios.delete('/users/me');
-    await adminAxios.delete('/users/me');
+    try {
+        await mongoose.connect('mongodb://localhost:27017/m245', {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+
+        const User = mongoose.model('User');
+
+        await User.deleteMany({
+            email: { $in: ['standard@test.com', 'admin@test.com'] }
+        });
+
+        await mongoose.disconnect();
+        console.log('Test users deleted.');
+    } catch (err) {
+        console.error('Failed to clean up test users:', err);
+    }
 });
 
 describe('Product Endpoints', () => {
