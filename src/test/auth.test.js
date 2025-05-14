@@ -1,7 +1,30 @@
 const axios = require('axios');
 const { API_BASE } = require('./utils');
+const mongoose = require('mongoose');
+const User = require('../models/User');  // Assuming you have a User model
 
 let adminToken, userToken, adminId, userId;
+
+// Connect to MongoDB for direct database access
+beforeAll(async () => {
+    await mongoose.connect('mongodb://localhost:27017/m245', {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+
+    // Cleanup: Delete users directly from the database before tests
+    await deleteUserIfExists('standarduser');
+    await deleteUserIfExists('adminuser');
+});
+
+// Function to delete user by username
+const deleteUserIfExists = async (username) => {
+    const user = await User.findOne({ username });
+    if (user) {
+        await User.deleteOne({ _id: user._id });
+        console.log(`User with username "${username}" deleted.`);
+    }
+};
 
 describe('Authentication', () => {
     test('Register Standard User', async () => {
