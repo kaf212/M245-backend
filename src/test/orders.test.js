@@ -1,16 +1,71 @@
-const { userToken, userId } = require('./auth.test.js');
 const { createAxiosInstance } = require('./utils');
+const axios = require("axios");
 
+let standardToken, adminToken;
+let userAxios, adminAxios;
 let orderId;
+let userId;
+
+beforeAll(async () => {
+    try {
+        // Register standard user
+        const userRes = await axios.post('http://localhost:5000/api/users/register', {
+            email: 'standard@test.com',
+            username: 'standardUser',
+            password: 'password123',
+            role: 'standard',
+        });
+
+        console.log(userRes.data._id)
+        userId = userRes.data._id
+
+        const loginUser = await axios.post('http://localhost:5000/api/users/login', {
+            email: 'standard@test.com',
+            password: 'password123',
+        });
+
+        standardToken = loginUser.data.token;
+        userAxios = createAxiosInstance(standardToken);
+
+    } catch (err) {
+        console.error('Standard user login failed:', err.response?.data || err);
+    }
+
+    try {
+        // Register admin user
+        await axios.post('http://localhost:5000/api/users/register', {
+            email: 'admin@test.com',
+            username: 'adminUser',
+            password: 'password123',
+            role: 'admin',
+        });
+
+        const loginAdmin = await axios.post('http://localhost:5000/api/users/login', {
+            email: 'admin@test.com',
+            password: 'password123',
+        });
+
+        adminToken = loginAdmin.data.token;
+        adminAxios = createAxiosInstance(adminToken);
+
+    } catch (err) {
+        console.error('Admin user login failed:', err.response?.data || err);
+    }
+});
+
+afterAll(async () => {
+    await userAxios.delete('/users/me');
+    await adminAxios.delete('/users/me');
+});
+
 
 describe('Order Endpoints', () => {
-    const userAxios = createAxiosInstance(userToken);
 
     test('User can create an order', async () => {
         const res = await userAxios.post('/orders', {
             customerId: userId,
             items: [{
-                productId: 'productObjectIdHere', // replace with actual product ID
+                productId: '681b52c90f853fd23a8437bb',
                 quantity: 1,
                 price: 19.99
             }],

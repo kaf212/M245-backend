@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 // Validate token (signature + expiration)
 const validateToken = (req, res, next) => {
     const authHeader = req.header('Authorization');
+    console.log(authHeader)
     const token = authHeader?.split(' ')[1]; // Expect Bearer token
 
     if (!token) return res.status(401).json({ error: 'Missing token' });
