@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
+const {authorizeStandard} = require("../middleware/authorization");
 
 // Get all orders (admin)
-router.get('/', async (req, res) => {
+router.get('/', authorizeStandard, async (req, res) => {
     const orders = await Order.find().populate('customerId items.productId');
     res.json(orders);
 });
@@ -15,26 +16,26 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 // Get single order
-router.get('/:orderId', async (req, res) => {
+router.get('/:orderId', authorizeStandard, async (req, res) => {
     const order = await Order.findById(req.params.orderId).populate('items.productId');
     res.json(order);
 });
 
 // Create order
-router.post('/', async (req, res) => {
+router.post('/', authorizeStandard, async (req, res) => {
     const newOrder = new Order(req.body);
     const saved = await newOrder.save();
     res.status(201).json(saved);
 });
 
 // Update order status
-router.put('/:orderId/status', async (req, res) => {
+router.put('/:orderId/status', authorizeStandard, async (req, res) => {
     const order = await Order.findByIdAndUpdate(req.params.orderId, { status: req.body.status }, { new: true });
     res.json(order);
 });
 
 // Delete order
-router.delete('/:orderId', async (req, res) => {
+router.delete('/:orderId', authorizeStandard, async (req, res) => {
     await Order.findByIdAndDelete(req.params.orderId);
     res.sendStatus(204);
 });

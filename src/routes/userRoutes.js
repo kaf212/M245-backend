@@ -6,13 +6,13 @@ const {authorizeStandard, authorizeAdmin} = require("../middleware/authorization
 const jwt = require("jsonwebtoken");
 
 // Get all users
-router.get('/', async (req, res) => {
+router.get('/', authorizeAdmin, async (req, res) => {
     const users = await User.find();
     res.json(users);
 });
 
 // Get single user
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authorizeAdmin, async (req, res) => {
     const user = await User.findById(req.params.userId);
     res.json(user);
 });
@@ -57,13 +57,13 @@ router.post('/login', async (req, res) => {
 });
 
 // Update user
-router.put('/:userId', async (req, res) => {
+router.put('/:userId', authorizeStandard, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
     res.json(user);
 });
 
 // Delete user
-router.delete('/:userId', async (req, res) => {
+router.delete('/:userId', authorizeAdmin, async (req, res) => {
     await User.findByIdAndDelete(req.params.userId);
     res.sendStatus(204);
 });
