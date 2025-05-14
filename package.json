@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "apitest": "jest auth.test.js orders.test.js product.test.js user.test.js\n"
   },
   "repository": {
     "type": "git",
