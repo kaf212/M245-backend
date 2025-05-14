@@ -30,6 +30,7 @@ const authorizeStandard = (req, res, next) => {
 const authorizeAdmin = (req, res, next) => {
     validateToken(req, res, () => {
         const { role } = req.user;
+        console.log(req.user)
         if (role === 'admin') return next();
         return res.status(403).json({ error: 'Admins only' });
     });

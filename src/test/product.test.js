@@ -17,7 +17,7 @@ beforeAll(async () => {
             email: 'standard@test.com',
             username: 'standardUser',
             password: 'password123',
-            role: 'standard',
+            isAdmin: 'false',
         });
 
         console.log(userRes.data._id)
@@ -41,7 +41,7 @@ beforeAll(async () => {
             email: 'admin@test.com',
             username: 'adminUser',
             password: 'password123',
-            role: 'admin',
+            isAdmin: 'true',
         });
 
         const loginAdmin = await axios.post('http://localhost:5000/api/users/login', {
@@ -63,9 +63,6 @@ afterAll(async () => {
 });
 
 describe('Product Endpoints', () => {
-    const adminAxios = createAxiosInstance(adminToken);
-    const userAxios = createAxiosInstance(standardToken);
-
     test('Admin can create product with image', async () => {
         const form = new FormData();
         form.append('name', 'Test Product');
