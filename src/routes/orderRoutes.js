@@ -10,7 +10,7 @@ router.get('/', authorizeStandard, async (req, res) => {
 });
 
 // Get orders by user ID
-router.get('/user/:userId', async (req, res) => {
+router.get('/user/:userId', authorizeStandard, async (req, res) => {
     const orders = await Order.find({ customerId: req.params.userId }).populate('items.productId');
     res.json(orders);
 });

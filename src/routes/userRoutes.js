@@ -76,7 +76,7 @@ router.put('/me', authorizeStandard, async (req, res) => {
 });
 
 // Update user
-router.put('/:userId', authorizeStandard, async (req, res) => {
+router.put('/:userId', authorizeAdmin, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
     res.json(user);
 });
