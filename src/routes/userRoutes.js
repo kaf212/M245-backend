@@ -1,41 +1,69 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const bcrypt = require("bcryptjs")
+const {authorizeStandard, authorizeAdmin} = require("../middleware/authorization")
+const jwt = require("jsonwebtoken");
 
 // Get all users
-router.get('/', async (req, res) => {
+router.get('/', authorizeAdmin, async (req, res) => {
     const users = await User.find();
     res.json(users);
 });
 
 // Get single user
-router.get('/:userId', async (req, res) => {
+router.get('/:userId', authorizeAdmin, async (req, res) => {
     const user = await User.findById(req.params.userId);
     res.json(user);
 });
 
 // Register new user
 router.post('/register', async (req, res) => {
-    const newUser = new User(req.body);
-    const saved = await newUser.save();
-    res.status(201).json(saved);
+    try {
+        const { password, ...rest } = req.body;
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+            ...rest,
+            password: hashedPassword
+        });
+
+        const saved = await newUser.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 // Login (mock - replace with real auth)
 router.post('/login', async (req, res) => {
-    const user = await User.findOne({ email: req.body.email });
-    if (!user || user.password !== req.body.password) return res.status(401).json({ error: 'Invalid credentials' });
-    res.json(user);
+    const { email, password } = req.body;
+    console.log(email, password)
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const userRole = (User.isAdmin) ? "admin" : "standard"
+
+    const token = jwt.sign(
+        { id: user._id, email: user.email, role: userRole },
+        process.env.SECRET_KEY,
+        { expiresIn: '1h' }
+    );
+
+    res.json({ token });
 });
 
 // Update user
-router.put('/:userId', async (req, res) => {
+router.put('/:userId', authorizeStandard, async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
     res.json(user);
 });
 
 // Delete user
-router.delete('/:userId', async (req, res) => {
+router.delete('/:userId', authorizeAdmin, async (req, res) => {
     await User.findByIdAndDelete(req.params.userId);
     res.sendStatus(204);
 });
