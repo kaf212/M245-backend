@@ -8,7 +8,7 @@ const { authorizeStandard, authorizeAdmin } = require('../middleware/authorizati
 // Configure multer
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/'); // make sure this directory exists
+        cb(null, 'images/'); // make sure this directory exists
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname));
