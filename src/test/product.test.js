@@ -4,7 +4,7 @@ const path = require('path');
 const { createAxiosInstance } = require('./utils');
 const axios = require("axios");
 const mongoose = require("mongoose");
-const User = require("../models/User")
+const User = require("../models/User");
 
 let productId;
 let standardToken, adminToken;
@@ -14,7 +14,6 @@ let userId;
 
 beforeAll(async () => {
     try {
-        // Register standard user
         const userRes = await axios.post('http://localhost:5000/api/users/register', {
             email: 'standard@test.com',
             username: 'standardUser',
@@ -22,8 +21,7 @@ beforeAll(async () => {
             isAdmin: 'false',
         });
 
-        console.log(userRes.data._id)
-        userId = userRes.data._id
+        userId = userRes.data._id;
 
         const loginUser = await axios.post('http://localhost:5000/api/users/login', {
             email: 'standard@test.com',
@@ -38,7 +36,6 @@ beforeAll(async () => {
     }
 
     try {
-        // Register admin user
         await axios.post('http://localhost:5000/api/users/register', {
             email: 'admin@test.com',
             username: 'adminUser',
@@ -66,8 +63,6 @@ afterAll(async () => {
             useUnifiedTopology: true,
         });
 
-        const User = mongoose.model('User');
-
         await User.deleteMany({
             email: { $in: ['standard@test.com', 'admin@test.com'] }
         });
@@ -83,14 +78,22 @@ describe('Product Endpoints', () => {
     test('Admin can create product with image', async () => {
         const form = new FormData();
         form.append('name', 'Test Product');
+        form.append('description', 'A test description');
         form.append('price', '29.99');
-        form.append('sizes[0][size]', 'M');
-        form.append('sizes[0][stock]', '10');
+        form.append('category', 'Shirts');
+        form.append('material', 'Cotton');
+        form.append('gender', 'Unisex');
+        form.append('ageGroup', 'Adults');
+        form.append('discount[amount]', '5');
+        form.append('discount[expiresAt]', '2025-12-31');
+        form.append('sizes', JSON.stringify([{ size: 'M', stock: 10 }]));
+        form.append('tags', JSON.stringify(['test', 'summer']));
         form.append('images', fs.createReadStream(path.join(__dirname, 'sample.jpg')));
 
         const res = await adminAxios.post('/products', form, {
-            headers: form.getHeaders()
+            headers: form.getHeaders(),
         });
+
         productId = res.data._id;
         expect(res.status).toBe(201);
     });

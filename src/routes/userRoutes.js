@@ -12,6 +12,7 @@ router.get('/', authorizeAdmin, async (req, res) => {
 });
 
 router.get('/me', authorizeStandard, async (req, res) => {
+    console.log("it happend once ----------------------------")
     try {
         const user = await User.findById(req.user.id).select('-password');
         if (!user) return res.status(404).json({ error: 'User not found' });
