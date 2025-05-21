@@ -28,16 +28,50 @@ router.get('/:productId', async (req, res) => {
     res.json(product);
 });
 
-// Create product with image upload
-router.post('/', authorizeAdmin, upload.array('images'), async (req, res) => {
-    const imagePaths = req.files.map(file => file.path);
-    const newProduct = new Product({
-        ...req.body,
-        images: imagePaths
-    });
-    const saved = await newProduct.save();
-    res.status(201).json(saved);
-});
+router.post(
+  '/',
+  authorizeAdmin,
+  upload.fields([{ name: 'images', maxCount: 10 }]),
+  async (req, res) => {
+    try {
+      console.log('req.body:', req.body);     // should be an object
+      console.log('req.files:', req.files);   // should contain uploaded files
+
+      // Parse stringified JSON fields
+      const sizes = JSON.parse(req.body.sizes || '[]');
+      const tags = JSON.parse(req.body.tags || '[]');
+
+      const discount = {
+        amount: Number(req.body.discount?.amount || 0),
+        expiresAt: req.body.discount?.expiresAt || null
+      };
+
+      const imagePaths = (req.files?.images || []).map(file => file.path);
+
+      const newProduct = new Product({
+        name: req.body.name,
+        description: req.body.description,
+        category: req.body.category,
+        price: Number(req.body.price),
+        sizes,
+        discount,
+        material: req.body.material,
+        gender: req.body.gender,
+        ageGroup: req.body.ageGroup,
+        images: imagePaths,
+        tags,
+      });
+
+      const saved = await newProduct.save();
+      res.status(201).json(saved);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+
 
 // Update product
 router.put('/:productId', authorizeAdmin, async (req, res) => {
