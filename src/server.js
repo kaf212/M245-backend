@@ -24,7 +24,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 
-app.use('/images', express.static('images'));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 
 (async () => {

@@ -71,6 +71,18 @@ router.post(
   }
 );
 
+// Serve a specific image file
+router.get('/image/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const imagePath = path.join(__dirname, '..', 'images', filename);
+    res.sendFile(imagePath, err => {
+        if (err) {
+            console.error('Image not found:', err);
+            res.status(404).json({ error: 'Image not found' });
+        }
+    });
+});
+
 
 
 // Update product
