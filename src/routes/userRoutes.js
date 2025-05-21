@@ -69,7 +69,7 @@ router.post('/login', async (req, res) => {
 
 router.put('/me', authorizeStandard, async (req, res) => {
     try {
-        const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
+        const user = await User.findByIdAndUpdate(req.user.id, req.body, { new: true });
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: 'Server error' });
