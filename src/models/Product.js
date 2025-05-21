@@ -6,8 +6,8 @@ const sizeSchema = new mongoose.Schema({
 }, { _id: false });
 
 const discountSchema = new mongoose.Schema({
-    amount: { type: Number, required: true },
-    expiresAt: { type: Date, required: true }
+    amount: { type: Number },
+    expiresAt: { type: Date }
 }, { _id: false });
 
 const productSchema = new mongoose.Schema({
