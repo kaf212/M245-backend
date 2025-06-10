@@ -81,11 +81,48 @@ router.get('/image/:filename', (req, res) => {
 
 
 
-// Update product
-router.put('/:productId', authorizeAdmin, async (req, res) => {
-    const product = await Product.findByIdAndUpdate(req.params.productId, req.body, { new: true });
-    res.json(product);
-});
+router.put(
+    '/:id',
+    authorizeAdmin,
+    upload.array('images', 10), // ✅ Same multer config as POST
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            console.log('req.body:', req.body);
+            console.log('req.files:', req.files);
+
+            const sizes = JSON.parse(req.body.sizes || '[]');
+            const tags = JSON.parse(req.body.tags || '[]');
+            const discount = req.body.discount ? JSON.parse(req.body.discount) : { amount: 0, expiresAt: null };
+
+            // Only update images if new ones were uploaded
+            const updateData = {
+                name: req.body.name,
+                description: req.body.description,
+                category: req.body.category,
+                price: Number(req.body.price),
+                sizes,
+                discount,
+                material: req.body.material,
+                gender: req.body.gender,
+                ageGroup: req.body.ageGroup,
+                tags,
+            };
+
+            // Add images only if new files were uploaded
+            if (req.files && req.files.length > 0) {
+                const imagePaths = req.files.map(file => '/images/' + file.filename);
+                updateData.images = imagePaths;
+            }
+
+            const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+            res.json(updatedProduct);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: err.message });
+        }
+    }
+);
 
 // Delete product
 router.delete('/:productId', authorizeAdmin, async (req, res) => {
